@@ -255,9 +255,6 @@ class XmlParser implements CommandLineRunner {
                 } else if (resultTypeOfChild.getValue().equals("NotAvailable")) {
                     xmlEventReader.nextEvent();
                     listToBePopulated.add(EMPTY);
-                } else if (resultTypeOfChild.getValue().equals("Repeat")) {
-                    newxtEvent = (XMLEvent) xmlEventReader.next();
-                    getvalueFromChildItem(listToBePopulated, xmlEventReader, newxtEvent);
                 }
             }
         }
