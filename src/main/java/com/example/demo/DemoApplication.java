@@ -3,10 +3,9 @@ package com.example.demo;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
@@ -17,8 +16,8 @@ import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.io.*;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.apache.logging.log4j.util.Strings.EMPTY;
 
@@ -36,14 +35,17 @@ class XmlParser implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         String fileName = "real.xml";
-        BvdCsvReportDataCollectorEntry bvdCsvReportDataCollectorEntry = parseXML(fileName);
 
-        System.out.println(bvdCsvReportDataCollectorEntry.toString());
+        List<BvdCsvReportDataCollectorEntry> bvdCsvReportDataCollectorEntries = new ArrayList<>();
+        parseXML(fileName, bvdCsvReportDataCollectorEntries);
+
+        System.out.println(bvdCsvReportDataCollectorEntries.stream().map(entry -> entry.getSubsidiaryBVDID())
+                .flatMap(Collection::stream)
+                .collect(Collectors.joining(";")));
 
     }
 
-    private BvdCsvReportDataCollectorEntry parseXML(String fileName) {
-        BvdCsvReportDataCollectorEntry bvdCsvReportDataCollectorEntry = null;
+    private void parseXML(String fileName, List<BvdCsvReportDataCollectorEntry> bvdCsvReportDataCollectorEntries) {
         XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
         try {
             File file = new File(fileName);
@@ -52,155 +54,226 @@ class XmlParser implements CommandLineRunner {
             String xml = split[1].split("</GetDataResult>")[0];
             InputStream targetStream = new ByteArrayInputStream(xml.getBytes());
             XMLEventReader xmlEventReader = xmlInputFactory.createXMLEventReader(targetStream);
+            List<BvdCsvReportDataCollectorEntry> bvdCsvReportDataCollectorExistingEntries = new ArrayList<>();
+            String bvdId = EMPTY;
+            String name = EMPTY;
             while (xmlEventReader.hasNext()) {
                 XMLEvent xmlEvent = xmlEventReader.nextEvent();
                 if (xmlEvent.isStartElement()) {
                     StartElement startElement = xmlEvent.asStartElement();
                     if (startElement.getName().getLocalPart().equals("record")) {
-                        bvdCsvReportDataCollectorEntry = new BvdCsvReportDataCollectorEntry();
                         //Get the 'id' attribute from Employee element
                         Attribute idAttr = startElement.getAttributeByName(new QName("selectionId"));
                         if (idAttr != null) {
-                            bvdCsvReportDataCollectorEntry.setBvdId(idAttr.getValue());
+                            bvdId = idAttr.getValue();
                         }
                     } else if (startElement.getName().getLocalPart().equals("item")) {
                         //Get the 'id' attribute from Employee element
                         Attribute alias = startElement.getAttributeByName(new QName("alias"));
-                        if (alias != null) {
+                        Attribute resultType = startElement.getAttributeByName(new QName("resultType"));
+                        if ((alias != null) && (!"NotAvailable".equals(resultType.getValue()))) {
                             String aliasValue = alias.getValue();
-
                             if (aliasValue.equals("companyName")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                bvdCsvReportDataCollectorEntry.setCompanyName(xmlEvent.asCharacters().getData());
+                                name = xmlEvent.asCharacters().getData();
+                                bvdCsvReportDataCollectorExistingEntries = getExisting(bvdId, name, bvdCsvReportDataCollectorEntries);
+                                if (CollectionUtils.isEmpty(bvdCsvReportDataCollectorExistingEntries)) {
+                                    BvdCsvReportDataCollectorEntry bvdCsvReportDataCollectorEntry = new BvdCsvReportDataCollectorEntry();
+                                    bvdCsvReportDataCollectorEntry.setCompanyName(name);
+                                    bvdCsvReportDataCollectorEntry.setBvdId(bvdId);
+                                    bvdCsvReportDataCollectorExistingEntries = Collections.singletonList(bvdCsvReportDataCollectorEntry);
+                                    bvdCsvReportDataCollectorEntries.addAll(bvdCsvReportDataCollectorExistingEntries);
+                                }
                             } else if (aliasValue.equals("city")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                bvdCsvReportDataCollectorEntry.setCity(xmlEvent.asCharacters().getData());
+                                String value = xmlEvent.asCharacters().getData();
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setCity(value));
                             } else if (aliasValue.equals("countryIso")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                bvdCsvReportDataCollectorEntry.setCountryIso(xmlEvent.asCharacters().getData());
+                                String value = xmlEvent.asCharacters().getData();
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setCountryIso(value));
                             } else if (aliasValue.equals("country")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                bvdCsvReportDataCollectorEntry.setCountry(xmlEvent.asCharacters().getData());
+                                String value = xmlEvent.asCharacters().getData();
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setCountry(value));
                             } else if (aliasValue.equals("operatingRevenueUSD")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                bvdCsvReportDataCollectorEntry.setOperatingRevenueUSD(xmlEvent.asCharacters().getData());
+                                String value = xmlEvent.asCharacters().getData();
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setOperatingRevenueUSD(value));
                             } else if (aliasValue.equals("tickerNo")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                bvdCsvReportDataCollectorEntry.setTickerNo(xmlEvent.asCharacters().getData());
+                                String value = xmlEvent.asCharacters().getData();
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setTickerNo(value));
                             } else if (aliasValue.equals("akaName")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getAkaName(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setAkaName(listReturned));
                             } else if (aliasValue.equals("regionInCountry")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                bvdCsvReportDataCollectorEntry.setRegionInCountry(xmlEvent.asCharacters().getData());
+                                String value = xmlEvent.asCharacters().getData();
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setRegionInCountry(value));
                             } else if (aliasValue.equals("standardisedLegalForm")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                bvdCsvReportDataCollectorEntry.setStandardisedLegalForm(xmlEvent.asCharacters().getData());
+                                String value = xmlEvent.asCharacters().getData();
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setStandardisedLegalForm(value));
                             } else if (aliasValue.equals("usSicPrimary")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                bvdCsvReportDataCollectorEntry.setUsSicPrimary(xmlEvent.asCharacters().getData());
+                                String value = xmlEvent.asCharacters().getData();
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setUsSicPrimary(value));
                             } else if (aliasValue.equals("usSicPrimaryIbidText")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                bvdCsvReportDataCollectorEntry.setUsSicPrimaryIbidText(xmlEvent.asCharacters().getData());
+                                String value = xmlEvent.asCharacters().getData();
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setUsSicPrimaryIbidText(value));
                             } else if (aliasValue.equals("usSicSecondary")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                bvdCsvReportDataCollectorEntry.setUsSicSecondary(xmlEvent.asCharacters().getData());
+                                String value = xmlEvent.asCharacters().getData();
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setUsSicSecondary(value));
                             } else if (aliasValue.equals("usSicSecondaryIbidText")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                bvdCsvReportDataCollectorEntry.setUsSicSecondaryIbidText(xmlEvent.asCharacters().getData());
+                                String value = xmlEvent.asCharacters().getData();
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setUsSicSecondaryIbidText(value));
                             } else if (aliasValue.equals("immediateParentCompanyName")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getImmediateParentCompanyName(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setImmediateParentCompanyName(listReturned));
                             } else if (aliasValue.equals("immediateParentISO")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getImmediateParentISO(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setImmediateParentISO(listReturned));
                             } else if (aliasValue.equals("immediateParentBvDID")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getImmediateParentBvDID(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setImmediateParentBvDID(listReturned));
                             } else if (aliasValue.equals("domesticParentCompanyName")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getDomesticParentCompanyName(), xmlEvent, xmlEventReader);
-                            } else if (aliasValue.equals("domesticParentCompanyName")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getDomesticParentCompanyName(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setDomesticParentCompanyName(listReturned));
+                            } else if (aliasValue.equals("domesticParentBVDID")) {
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setDomesticParentBVDID(listReturned));
                             } else if (aliasValue.equals("domesticParentISO")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getDomesticParentISO(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setDomesticParentISO(listReturned));
                             } else if (aliasValue.equals("globalParentCompanyName")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getGlobalParentCompanyName(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentCompanyName(listReturned));
                             } else if (aliasValue.equals("globalParentISO")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getGlobalParentISO(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentISO(listReturned));
                             } else if (aliasValue.equals("globalParentBvD")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getGlobalParentBvdId(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentBvdId(listReturned));
                             } else if (aliasValue.equals("shareholderCompanyName")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getShareholderCompanyName(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderCompanyName(listReturned));
                             } else if (aliasValue.equals("shareholderCity")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getShareholderCity(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderCity(listReturned));
                             } else if (aliasValue.equals("shareholderIsoCode")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getShareholderIsoCode(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderIsoCode(listReturned));
                             } else if (aliasValue.equals("shareholderTicker")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getShareholderTicker(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderTicker(listReturned));
                             } else if (aliasValue.equals("shareholderBvdID")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getShareholderBvdID(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderBvdID(listReturned));
                             } else if (aliasValue.equals("shareholderType")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getShareholderType(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderType(listReturned));
                             } else if (aliasValue.equals("shareholderDirect")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getShareholderDirect(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderDirect(listReturned));
                             } else if (aliasValue.equals("shareholderTotal")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getShareholderTotal(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderTotal(listReturned));
                             } else if (aliasValue.equals("source")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getSource(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSource(listReturned));
                             } else if (aliasValue.equals("date")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getDate(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setDate(listReturned));
                             } else if (aliasValue.equals("subsidiaryName")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getSubsidiaryName(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryName(listReturned));
                             } else if (aliasValue.equals("subsidiaryBvdId")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getSubsidiaryBVDID(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryBVDID(listReturned));
                             } else if (aliasValue.equals("subsidiaryStatus")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getSubsidiaryStatus(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryStatus(listReturned));
                             } else if (aliasValue.equals("subsidiaryType")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getSubsidiaryType(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryType(listReturned));
                             } else if (aliasValue.equals("subsidiaryLevel")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getSubsidiaryLevel(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryLevel(listReturned));
                             } else if (aliasValue.equals("subsidiaryCity")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getSubsidiaryCity(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryCity(listReturned));
                             } else if (aliasValue.equals("subsidiaryTicker")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getSubsidiaryTicker(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryTicker(listReturned));
                             } else if (aliasValue.equals("subsidiaryIsoCode")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getSubsidiaryIsoCode(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryIsoCode(listReturned));
                             } else if (aliasValue.equals("subsidiaryDirect")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getSubsidiaryDirect(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryDirect(listReturned));
                             } else if (aliasValue.equals("subsidiaryTotal")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getSubsidiaryTotal(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryTotal(listReturned));
                             } else if (aliasValue.equals("subsidiarySource")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getSubsidiarySource(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiarySource(listReturned));
                             } else if (aliasValue.equals("subsidiaryDate")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getSubsidiaryDate(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryDate(listReturned));
                             } else if (aliasValue.equals("globalParentSalutation")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getGlobalParentSalutation(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentSalutation(listReturned));
                             } else if (aliasValue.equals("globalParentFirstName")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getGlobalParentFirstName(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentFirstName(listReturned));
                             } else if (aliasValue.equals("globalParentLastName")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getGlobalParentLastName(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setAkaName(listReturned));
                             } else if (aliasValue.equals("globalParentTicker")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getGlobalParentTicker(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentLastName(listReturned));
                             } else if (aliasValue.equals("globalUltimateParentType")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getGlobalUltimateParentType(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalUltimateParentType(listReturned));
                             } else if (aliasValue.equals("globalParentCity")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getGlobalParentCity(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentCity(listReturned));
                             } else if (aliasValue.equals("controllingShareholderCompanyName")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getControllingShareholderCompanyName(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderCompanyName(listReturned));
                             } else if (aliasValue.equals("controllingShareholderSalutation")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getControllingShareholderSalutation(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderSalutation(listReturned));
                             } else if (aliasValue.equals("controllingShareholderFirstName")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getControllingShareholderFirstName(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderFirstName(listReturned));
                             } else if (aliasValue.equals("controllingShareholderLastName")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getControllingShareholderLastName(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderLastName(listReturned));
                             } else if (aliasValue.equals("controllingShareholderBVDID")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getControllingShareholderBVDID(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderBVDID(listReturned));
                             } else if (aliasValue.equals("controllingShareholderTicker")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getControllingShareholderTicker(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderTicker(listReturned));
                             } else if (aliasValue.equals("controllingShareholderISO")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getControllingShareholderISO(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderISO(listReturned));
                             } else if (aliasValue.equals("controllingShareholderCity")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getControllingShareholderCity(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderCity(listReturned));
                             } else if (aliasValue.equals("controllingShareholderType")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getControllingShareholderType(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderType(listReturned));
                             } else if (aliasValue.equals("controllingShareholderLevel")) {
-                                parseArray(bvdCsvReportDataCollectorEntry.getControllingShareholderLevel(), xmlEvent, xmlEventReader);
+                                List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
+                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderLevel(listReturned));
+                            } else {
+                                xmlEventReader.nextEvent();
                             }
                         }
                     }
@@ -214,7 +287,10 @@ class XmlParser implements CommandLineRunner {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return bvdCsvReportDataCollectorEntry;
+    }
+
+    private List<BvdCsvReportDataCollectorEntry> getExisting(String bvdId, String name, List<BvdCsvReportDataCollectorEntry> bvdCsvReportDataCollectorEntries) {
+        return bvdCsvReportDataCollectorEntries.stream().filter(entry -> entry.getBvdId().equals(bvdId) || entry.getCompanyName().equals(name)).collect(Collectors.toList());
     }
 
     private boolean isEndElement(XMLEvent xmlEvent, String endTag) {
@@ -222,7 +298,8 @@ class XmlParser implements CommandLineRunner {
         return endElement.getName().getLocalPart().equals(endTag);
     }
 
-    private void parseArray(List<String> listToBePopulated, XMLEvent xmlEvent, XMLEventReader xmlEventReader) {
+    private List<String> parseArray(XMLEvent xmlEvent, XMLEventReader xmlEventReader) {
+        List<String> listToBePopulated = new ArrayList<>();
         try {
             if (xmlEvent.isStartElement()) {
                 StartElement startElement = xmlEvent.asStartElement();
@@ -242,6 +319,7 @@ class XmlParser implements CommandLineRunner {
         } catch (XMLStreamException e) {
             e.printStackTrace();
         }
+        return listToBePopulated;
     }
 
     private void getvalueFromChildItem(List<String> listToBePopulated, XMLEventReader xmlEventReader, XMLEvent newxtEvent) throws XMLStreamException {
