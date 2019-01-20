@@ -5,6 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
@@ -16,10 +17,14 @@ import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.io.*;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.apache.logging.log4j.util.Strings.EMPTY;
+import static org.apache.logging.log4j.util.Strings.isNotEmpty;
 
 @SpringBootApplication
 public class DemoApplication {
@@ -79,199 +84,321 @@ class XmlParser implements CommandLineRunner {
                                 bvdCsvReportDataCollectorExistingEntries = getExisting(bvdId, name, bvdCsvReportDataCollectorEntries);
                                 if (CollectionUtils.isEmpty(bvdCsvReportDataCollectorExistingEntries)) {
                                     BvdCsvReportDataCollectorEntry bvdCsvReportDataCollectorEntry = new BvdCsvReportDataCollectorEntry();
-                                    bvdCsvReportDataCollectorEntry.setCompanyName(name);
-                                    bvdCsvReportDataCollectorEntry.setBvdId(bvdId);
+                                    if(!StringUtils.isEmpty(name)) {
+                                        bvdCsvReportDataCollectorEntry.setCompanyName(name);
+                                    }
+                                    if(!StringUtils.isEmpty(bvdId)) {
+                                        bvdCsvReportDataCollectorEntry.setBvdId(bvdId);
+                                    }
                                     bvdCsvReportDataCollectorExistingEntries = Collections.singletonList(bvdCsvReportDataCollectorEntry);
                                     bvdCsvReportDataCollectorEntries.addAll(bvdCsvReportDataCollectorExistingEntries);
                                 }
                             } else if (aliasValue.equals("city")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                String value = xmlEvent.asCharacters().getData();
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setCity(value));
+                                if(xmlEvent.isCharacters() && isNotEmpty(xmlEvent.asCharacters().getData())) {
+                                    String value = xmlEvent.asCharacters().getData();
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setCity(value));
+                                }
                             } else if (aliasValue.equals("countryIso")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                String value = xmlEvent.asCharacters().getData();
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setCountryIso(value));
+                                if(xmlEvent.isCharacters() && isNotEmpty(xmlEvent.asCharacters().getData())) {
+                                    String value = xmlEvent.asCharacters().getData();
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setCountryIso(value));
+                                }
                             } else if (aliasValue.equals("country")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                String value = xmlEvent.asCharacters().getData();
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setCountry(value));
+                                if(xmlEvent.isCharacters() && isNotEmpty(xmlEvent.asCharacters().getData())) {
+                                    String value = xmlEvent.asCharacters().getData();
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setCountry(value));
+                                }
                             } else if (aliasValue.equals("operatingRevenueUSD")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                String value = xmlEvent.asCharacters().getData();
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setOperatingRevenueUSD(value));
+                                if(xmlEvent.isCharacters() && isNotEmpty(xmlEvent.asCharacters().getData())) {
+                                    String value = xmlEvent.asCharacters().getData();
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setOperatingRevenueUSD(value));
+                                }
                             } else if (aliasValue.equals("tickerNo")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                String value = xmlEvent.asCharacters().getData();
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setTickerNo(value));
+                                if(xmlEvent.isCharacters() && isNotEmpty(xmlEvent.asCharacters().getData())) {
+                                    String value = xmlEvent.asCharacters().getData();
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setTickerNo(value));
+                                }
                             } else if (aliasValue.equals("akaName")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setAkaName(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setAkaName(listReturned));
+                                }
                             } else if (aliasValue.equals("regionInCountry")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                String value = xmlEvent.asCharacters().getData();
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setRegionInCountry(value));
+                                if(xmlEvent.isCharacters() && isNotEmpty(xmlEvent.asCharacters().getData())) {
+                                    String value = xmlEvent.asCharacters().getData();
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setRegionInCountry(value));
+                                }
                             } else if (aliasValue.equals("standardisedLegalForm")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                String value = xmlEvent.asCharacters().getData();
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setStandardisedLegalForm(value));
+                                if(xmlEvent.isCharacters() && isNotEmpty(xmlEvent.asCharacters().getData())) {
+                                    String value = xmlEvent.asCharacters().getData();
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setStandardisedLegalForm(value));
+                                }
                             } else if (aliasValue.equals("usSicPrimary")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                String value = xmlEvent.asCharacters().getData();
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setUsSicPrimary(value));
+                                if(xmlEvent.isCharacters() && isNotEmpty(xmlEvent.asCharacters().getData())) {
+                                    String value = xmlEvent.asCharacters().getData();
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setUsSicPrimary(value));
+                                }
                             } else if (aliasValue.equals("usSicPrimaryIbidText")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                String value = xmlEvent.asCharacters().getData();
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setUsSicPrimaryIbidText(value));
+                                if(xmlEvent.isCharacters() && isNotEmpty(xmlEvent.asCharacters().getData())) {
+                                    String value = xmlEvent.asCharacters().getData();
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setUsSicPrimaryIbidText(value));
+                                }
                             } else if (aliasValue.equals("usSicSecondary")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                String value = xmlEvent.asCharacters().getData();
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setUsSicSecondary(value));
+                                if(xmlEvent.isCharacters() && isNotEmpty(xmlEvent.asCharacters().getData())) {
+                                    String value = xmlEvent.asCharacters().getData();
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setUsSicSecondary(value));
+                                }
                             } else if (aliasValue.equals("usSicSecondaryIbidText")) {
                                 xmlEvent = xmlEventReader.nextEvent();
-                                String value = xmlEvent.asCharacters().getData();
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setUsSicSecondaryIbidText(value));
+                                if(xmlEvent.isCharacters() && isNotEmpty(xmlEvent.asCharacters().getData())) {
+                                    String value = xmlEvent.asCharacters().getData();
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setUsSicSecondaryIbidText(value));
+                                }
                             } else if (aliasValue.equals("immediateParentCompanyName")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setImmediateParentCompanyName(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setImmediateParentCompanyName(listReturned));
+                                }
                             } else if (aliasValue.equals("immediateParentISO")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setImmediateParentISO(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setImmediateParentISO(listReturned));
+                                }
                             } else if (aliasValue.equals("immediateParentBvDID")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setImmediateParentBvDID(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setImmediateParentBvDID(listReturned));
+                                }
                             } else if (aliasValue.equals("domesticParentCompanyName")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setDomesticParentCompanyName(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setDomesticParentCompanyName(listReturned));
+                                }
                             } else if (aliasValue.equals("domesticParentBVDID")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setDomesticParentBVDID(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setDomesticParentBVDID(listReturned));
+                                }
                             } else if (aliasValue.equals("domesticParentISO")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setDomesticParentISO(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setDomesticParentISO(listReturned));
+                                }
                             } else if (aliasValue.equals("globalParentCompanyName")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentCompanyName(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentCompanyName(listReturned));
+                                }
                             } else if (aliasValue.equals("globalParentISO")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentISO(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentISO(listReturned));
+                                }
                             } else if (aliasValue.equals("globalParentBvD")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentBvdId(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentBvdId(listReturned));
+                                }
                             } else if (aliasValue.equals("shareholderCompanyName")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderCompanyName(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderCompanyName(listReturned));
+                                }
                             } else if (aliasValue.equals("shareholderCity")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderCity(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderCity(listReturned));
+                                }
                             } else if (aliasValue.equals("shareholderIsoCode")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderIsoCode(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderIsoCode(listReturned));
+                                }
                             } else if (aliasValue.equals("shareholderTicker")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderTicker(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderTicker(listReturned));
+                                }
                             } else if (aliasValue.equals("shareholderBvdID")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderBvdID(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderBvdID(listReturned));
+                                }
                             } else if (aliasValue.equals("shareholderType")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderType(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderType(listReturned));
+                                }
                             } else if (aliasValue.equals("shareholderDirect")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderDirect(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderDirect(listReturned));
+                                }
                             } else if (aliasValue.equals("shareholderTotal")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderTotal(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setShareholderTotal(listReturned));
+                                }
                             } else if (aliasValue.equals("source")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSource(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSource(listReturned));
+                                }
                             } else if (aliasValue.equals("date")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setDate(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setDate(listReturned));
+                                }
                             } else if (aliasValue.equals("subsidiaryName")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryName(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryName(listReturned));
+                                }
                             } else if (aliasValue.equals("subsidiaryBvdId")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryBVDID(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryBVDID(listReturned));
+                                }
                             } else if (aliasValue.equals("subsidiaryStatus")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryStatus(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryStatus(listReturned));
+                                }
                             } else if (aliasValue.equals("subsidiaryType")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryType(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryType(listReturned));
+                                }
                             } else if (aliasValue.equals("subsidiaryLevel")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryLevel(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryLevel(listReturned));
+                                }
                             } else if (aliasValue.equals("subsidiaryCity")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryCity(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryCity(listReturned));
+                                }
                             } else if (aliasValue.equals("subsidiaryTicker")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryTicker(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryTicker(listReturned));
+                                }
                             } else if (aliasValue.equals("subsidiaryIsoCode")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryIsoCode(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryIsoCode(listReturned));
+                                }
                             } else if (aliasValue.equals("subsidiaryDirect")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryDirect(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryDirect(listReturned));
+                                }
                             } else if (aliasValue.equals("subsidiaryTotal")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryTotal(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryTotal(listReturned));
+                                }
                             } else if (aliasValue.equals("subsidiarySource")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiarySource(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiarySource(listReturned));
+                                }
                             } else if (aliasValue.equals("subsidiaryDate")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryDate(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setSubsidiaryDate(listReturned));
+                                }
                             } else if (aliasValue.equals("globalParentSalutation")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentSalutation(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentSalutation(listReturned));
+                                }
                             } else if (aliasValue.equals("globalParentFirstName")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentFirstName(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentFirstName(listReturned));
+                                }
                             } else if (aliasValue.equals("globalParentLastName")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setAkaName(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setAkaName(listReturned));
+                                }
                             } else if (aliasValue.equals("globalParentTicker")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentLastName(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentLastName(listReturned));
+                                }
                             } else if (aliasValue.equals("globalUltimateParentType")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalUltimateParentType(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalUltimateParentType(listReturned));
+                                }
                             } else if (aliasValue.equals("globalParentCity")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentCity(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setGlobalParentCity(listReturned));
+                                }
                             } else if (aliasValue.equals("controllingShareholderCompanyName")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderCompanyName(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderCompanyName(listReturned));
+                                }
                             } else if (aliasValue.equals("controllingShareholderSalutation")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderSalutation(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderSalutation(listReturned));
+                                }
                             } else if (aliasValue.equals("controllingShareholderFirstName")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderFirstName(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderFirstName(listReturned));
+                                }
                             } else if (aliasValue.equals("controllingShareholderLastName")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderLastName(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderLastName(listReturned));
+                                }
                             } else if (aliasValue.equals("controllingShareholderBVDID")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderBVDID(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderBVDID(listReturned));
+                                }
                             } else if (aliasValue.equals("controllingShareholderTicker")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderTicker(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderTicker(listReturned));
+                                }
                             } else if (aliasValue.equals("controllingShareholderISO")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderISO(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderISO(listReturned));
+                                }
                             } else if (aliasValue.equals("controllingShareholderCity")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderCity(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderCity(listReturned));
+                                }
                             } else if (aliasValue.equals("controllingShareholderType")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderType(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderType(listReturned));
+                                }
                             } else if (aliasValue.equals("controllingShareholderLevel")) {
                                 List<String> listReturned = parseArray(xmlEvent, xmlEventReader);
-                                bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderLevel(listReturned));
+                                if(!CollectionUtils.isEmpty(listReturned)) {
+                                    bvdCsvReportDataCollectorExistingEntries.forEach(entry -> entry.setControllingShareholderLevel(listReturned));
+                                }
                             } else {
                                 xmlEventReader.nextEvent();
                             }
